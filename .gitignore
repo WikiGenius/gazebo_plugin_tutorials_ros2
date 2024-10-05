@@ -1,0 +1,189 @@
+# Operating System Files
+##########################
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+*~
+
+# Python
+##########################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+*.env
+pip-log.txt
+pip-delete-this-directory.txt
+*.whl
+
+# C, C++ (general)
+##########################
+*.o
+*.obj
+*.so
+*.exe
+*.out
+*.a
+*.dSYM/
+*.class
+
+# CMake
+##########################
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# JetBrains IDEs (e.g. IntelliJ IDEA, WebStorm, PyCharm, etc.)
+##########################
+.idea/
+*.iml
+*.iws
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/libraries/
+.idea/modules.xml
+.idea/.name
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+
+# Visual Studio Code
+##########################
+.vscode/
+*.code-workspace
+
+# Visual Studio
+##########################
+.vscode/
+.vs/
+*.csproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.sln.ide
+.ipch
+*.log
+*.pdb
+
+# Logs and Temporary Files
+##########################
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Compiled Source Code
+##########################
+*.out
+*.obj
+*.elf
+*.hex
+*.map
+*.o
+*.d
+*.gcno
+*.gcda
+
+# Editor and IDE Files
+##########################
+*.swp
+*.swo
+*.tmp
+*.bak
+*.sublime-project
+*.sublime-workspace
+
+# Build/Package Management
+##########################
+build/
+dist/
+env/
+venv/
+.env
+
+# Build and package management
+##########################
+*.lock
+yarn.lock
+package-lock.json
+npm-debug.log*
+*.tgz
+
+# Images, Artifacts, and Generated Files
+##########################
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.ico
+*.tiff
+*.tif
+*.bmp
+*.psd
+*.ai
+*.eps
+*.mp4
+*.avi
+*.mkv
+*.mp3
+*.wav
+*.mov
+
+# Binaries
+##########################
+*.dll
+*.exe
+*.out
+*.apk
+*.app
+*.bin
+*.msi
+
+# Backup files and temporary
+##########################
+*.bak
+*.swp
+*.tmp
+*~
+*.orig
+
+# Documentation artifacts
+##########################
+*.pdf
+*.doc
+*.docx
+*.odt
+*.ppt
+*.pptx
+*.xls
+*.xlsx
+.DS_Store
+
+# ROS (Robot Operating System) Specific
+##########################
+build/
+devel/
+install/
+logs/
+*.log

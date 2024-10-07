@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+
+<sdf version="1.4">
+
+  <world name="default">
+
+    <!-- ground plane-->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- ground sun-->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <plugin name="world_gazebo_plugin" filename="libworld_gazebo_plugin.so"/>
+
+  </world>
+
+</sdf>
+
+
+
+

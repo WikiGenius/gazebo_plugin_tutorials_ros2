@@ -42,6 +42,7 @@ def load_gazebo_launch(gzserver_launch_path, gzclient_launch_path, world_path, v
         condition=IfCondition(LaunchConfiguration('gui')),
         launch_description_source=PythonLaunchDescriptionSource(
             gzclient_launch_path),
+        launch_arguments={'verbose': 'false'}.items()
     )
 
     return gzserver_launch, gzclient_launch

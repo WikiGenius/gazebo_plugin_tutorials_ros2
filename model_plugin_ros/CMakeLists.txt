@@ -10,16 +10,29 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
 find_package(gazebo_dev REQUIRED)
 
-include_directories(${GAZEBO_INCLUDE_DIRS})
+include_directories(
+  ${GAZEBO_INCLUDE_DIRS}
+  ${rclcpp_INCLUDE_DIRS}
+  ${std_msgs_INCLUDE_DIRS}
+  ${rcl_interfaces_INCLUDE_DIRS}
+)
+
 
 add_library(simple_model_ros_plugin SHARED ./src/simple_model_ros_plugin.cc)
 target_link_libraries(simple_model_ros_plugin ${GAZEBO_LIBRARIES})
+ament_target_dependencies(simple_model_ros_plugin 
+rclcpp 
+std_msgs)
 install(TARGETS simple_model_ros_plugin LIBRARY DESTINATION lib)
 
 add_library(model_ros_plugin SHARED ./src/model_ros_plugin.cc)
 target_link_libraries(model_ros_plugin ${GAZEBO_LIBRARIES})
+ament_target_dependencies(model_ros_plugin
+rclcpp 
+std_msgs)
 install(TARGETS model_ros_plugin LIBRARY DESTINATION lib)
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})

@@ -1,0 +1,1 @@
+#include "gazebo_ros/gazebo_ros_init.hpp"

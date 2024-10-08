@@ -14,26 +14,23 @@ find_package(std_msgs REQUIRED)
 find_package(gazebo_dev REQUIRED)
 
 include_directories(
+  include/
   ${GAZEBO_INCLUDE_DIRS}
   ${rclcpp_INCLUDE_DIRS}
   ${std_msgs_INCLUDE_DIRS}
   ${rcl_interfaces_INCLUDE_DIRS}
 )
+set(MODEL_PLUGIN_ROS_LIBS gazebo_dev rclcpp std_msgs)
 
+function(install_plugin plugin_library src)
+  add_library(${plugin_library} SHARED ${src})
+  ament_target_dependencies(${plugin_library} ${MODEL_PLUGIN_ROS_LIBS})
+  install(TARGETS ${plugin_library} LIBRARY DESTINATION lib)
+endfunction(install_plugin)
 
-add_library(simple_model_ros_plugin SHARED ./src/simple_model_ros_plugin.cc)
-target_link_libraries(simple_model_ros_plugin ${GAZEBO_LIBRARIES})
-ament_target_dependencies(simple_model_ros_plugin 
-rclcpp 
-std_msgs)
-install(TARGETS simple_model_ros_plugin LIBRARY DESTINATION lib)
+install_plugin(simple_model_ros_plugin ./src/simple_model_ros_plugin.cc)
+install_plugin(model_ros_plugin ./src/model_ros_plugin.cc)
 
-add_library(model_ros_plugin SHARED ./src/model_ros_plugin.cc)
-target_link_libraries(model_ros_plugin ${GAZEBO_LIBRARIES})
-ament_target_dependencies(model_ros_plugin
-rclcpp 
-std_msgs)
-install(TARGETS model_ros_plugin LIBRARY DESTINATION lib)
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME})
 install(DIRECTORY worlds DESTINATION share/${PROJECT_NAME})

@@ -10,6 +10,8 @@ namespace gazebo
     this->logger_name_ = "simple_model_Ros_plugin";
     this->command_topic_ = "/model_move_up";
     this->vel_ = 0.1;
+    this->activate_move_ = false;
+    this->count_ = 0;
   }
 
   void SimpleModelRosPlugin::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf)

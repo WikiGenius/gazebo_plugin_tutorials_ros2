@@ -1,0 +1,119 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="default">
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- A simple box for the LiDAR to scan -->
+    <model name="box">
+      <pose>2 0 0.5 0 0 0</pose>
+      <link name="link">
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>1 1 1</size>
+            </box>
+          </geometry>
+        </visual>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>1 1 1</size>
+            </box>
+          </geometry>
+        </collision>
+      </link>
+    </model>
+
+    <!-- The LiDAR sensor mounted on a vehicle -->
+    <model name="velodyne_sensor">
+      <pose>0 0 0.5 0 0 0</pose>
+      <link name="lidar_link">
+        <gravity>0</gravity>
+        <inertial>
+          <pose>0 0 0 0 0 0 0</pose>
+          <inertia>
+            <ixx>0.001</ixx>
+            <ixy>0.000</ixy>
+            <ixz>0.000</ixz>
+            <iyy>0.001</iyy>
+            <iyz>0.000</iyz>
+            <izz>0.001</izz>
+          </inertia>
+          <mass>0.114</mass>
+        </inertial>
+
+        <collision name="lidar_sensor_collision">
+          <pose>0 0 0 0 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.0508</radius>
+              <length>0.055</length>
+            </cylinder>
+          </geometry>
+        </collision>
+
+        <visual name="lidar_sensor_visual">
+
+          <pose>0 0 0 0 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.0508</radius>
+              <length>0.055</length>
+            </cylinder>
+          </geometry>
+        </visual>
+        <sensor name="gpu_lidar" type="gpu_ray">
+          <always_on>true</always_on>
+          <visualize>false</visualize>
+          <pose>0 0 0 0 0 0</pose>          <!-- Position the sensor relative to the model -->
+          <update_rate>10</update_rate>          <!-- LiDAR update rate in Hz -->
+          <ray>
+            <scan>
+              <horizontal>
+                <samples>1024</samples>                <!-- Horizontal resolution -->
+                <resolution>1</resolution>                <!-- Step resolution -->
+                <min_angle>-3.14159</min_angle>                <!-- -180 degrees -->
+                <max_angle>3.14159</max_angle>                <!-- 180 degrees -->
+              </horizontal>
+              <vertical>
+                <samples>16</samples>                <!-- 16 vertical beams (VLP-16) -->
+                <min_angle>-0.261799</min_angle>                <!-- -15 degrees -->
+                <max_angle>0.261799</max_angle>                <!-- 15 degrees -->
+              </vertical>
+            </scan>
+            <range>
+              <min>0.1</min>              <!-- Minimum range in meters -->
+              <max>100.0</max>              <!-- Maximum range in meters -->
+              <resolution>0.01</resolution>              <!-- Distance resolution -->
+            </range>
+            <noise>
+              <type>gaussian</type>
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>              <!-- Standard deviation for noise -->
+            </noise>
+          </ray>
+          <plugin name="gazebo_ros_velodyne_laser2" filename="libgazebo_ros_velodyne_laser2.so">
+            <ros>
+              <remapping>~/out:=scan</remapping>
+            </ros>
+            <!-- <topicName>/points</topicName> -->
+            <min_range>0.1</min_range>
+            <max_range>100.0</max_range>
+            <min_intensity>0 </min_intensity>
+            <gaussian_noise>0.01</gaussian_noise>
+            <organize_cloud>false</organize_cloud>
+          </plugin>
+
+        </sensor>
+      </link>
+    </model>
+
+    <!-- Light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+  </world>
+</sdf>

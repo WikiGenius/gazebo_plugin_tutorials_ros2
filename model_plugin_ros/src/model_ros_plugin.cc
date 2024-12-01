@@ -1,138 +1,107 @@
+#include <gazebo/common/common.hh>         // For Gazebo common functions
+#include <gazebo/gazebo.hh>                // For accessing all Gazebo classes
+#include <gazebo/physics/physics.hh>       // For Gazebo physics, ModelPtr
+#include <ignition/math/Vector3.hh>        // For Vector3d from Ignition Math
+#include <rclcpp/rclcpp.hpp>               // For ROS 2
+#include <std_msgs/msg/bool.hpp>           // For std_msgs/Bool message type
+#include <thread>                          // For multithreading
+#include <functional>                      // For std::bind()
 
-// #include <gazebo/gazebo.hh>                // for accessing all gazebo classes
-// #include <gazebo/common/common.hh>         // for common fn in gazebo like ModelPlugin, event
-// #include <gazebo/physics/physics.hh>       // for gazebo physics, to access -- ModelPtr
-// #include <ignition/math/Vector3.hh>        // to access Vector3d() from ignition math class
-// #include <ros/ros.h>                      // for acceessing ros
-// #include <std_msgs/Bool.h>                // std_msgs/Bool for ros
+namespace gazebo {
+class ModelRosPlugin : public ModelPlugin {
+public:
+  ModelRosPlugin() : ModelPlugin() {
+    this->logger_name_ = "simple_model_ros_plugin";
+    this->command_topic_ = "/model_move_up";
+    this->vel_ = 0.1;
+    this->activate_move_ = false;
+    this->count_ = 0;
+  }
 
-// #include <functional>                     // to access boost::bind()
-// #include <thread>                        // to use multithreading
-// #include "ros/callback_queue.h"         // for ros callback queue
-// #include "ros/subscribe_options.h"     // to access SubscribeOptions
+  void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) override {
+    if (!rclcpp::ok()) {
+      int argc = 0;
+      char **argv = nullptr;
+      rclcpp::init(argc, argv);
+    }
 
-// namespace gazebo {
-// class ModelRosPlugin : public ModelPlugin {
-    
-// public:
-//   void Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
-    
-//     // chech if ros is initized or not
-//         if (!ros::isInitialized())
-//         {
-//             int argc = 0; 
-//             char **argv = NULL;
-//             // good pratice of init ros node 
-//             ros::init(argc, argv, "gazebo_client",
-//                 ros::init_options::NoSigintHandler);
-//         }
+    RCLCPP_INFO(rclcpp::get_logger(this->logger_name_), "ROS 2 Model Plugin Loaded!");
 
-//     ROS_INFO("ROS Model Plugin Loaded!");
+    // Initialize ROS 2 node
+    this->ros_node_ = std::make_shared<rclcpp::Node>("gazebo_client");
 
-//     //Create our ROS node. This acts in a similar manner to gazebo node
-//     this->rosNode.reset(new ros::NodeHandle("gazebo_client"));
+    // Create a subscription to the /model_move_up topic
+    this->subscription_ = this->ros_node_->create_subscription<std_msgs::msg::Bool>(
+        this->command_topic_, 10,
+        std::bind(&ModelRosPlugin::ActivateCallback, this, std::placeholders::_1));
 
-//     // subscribeoptions help to better manage multisubscriber (multithreading) 
+    // Spin in a separate thread to process messages
+    this->ros_spinner_thread_ = std::thread([this]() {
+      rclcpp::spin(this->ros_node_);
+    });
 
-//     ros::SubscribeOptions so = ros::SubscribeOptions::create<std_msgs::Bool>("/model_move_up", 
-//                                         1, boost::bind(&ModelRosPlugin::Activate_Callback, this, _1), ros::VoidPtr(), &this->rosQueue);
-//     //                                                          this->Activate_Callback
+    // Store the model pointer
+    this->model_ = _model;
 
-//     //     VoidPtr() - if the reference count goes to 0 the subscriber callbacks will not get called
+    std::cout << "Model Name = " << this->model_->GetName() << std::endl;
 
-//     this->sub = this->rosNode->subscribe(so);
+    // Assign velocity from SDF if specified
+    if (_sdf->HasElement("model_vel")) {
+      this->vel_ = _sdf->Get<double>("model_vel");
+    }
+    std::cout << "model_vel = " << this->vel_ << std::endl;
 
-//     // Spin up the queue helper thread.
-//     this->rosQueueThread =
-//     std::thread(std::bind(&ModelRosPlugin::QueueThread, this));   //c++ threading to keep 
-//                                          //this->QueueThread       this->QueueThread() fn running
+    // Listen to the update event
+    this->update_connection_ = event::Events::ConnectWorldUpdateBegin(
+        std::bind(&ModelRosPlugin::OnUpdate, this));
+  }
 
-//     // Store the pointer to the model
-//     this->model = _model;
+  // Callback for the ROS 2 subscription
+  void ActivateCallback(const std_msgs::msg::Bool::SharedPtr msg) {
+    RCLCPP_INFO(rclcpp::get_logger(this->logger_name_), "Received Message = %d", msg->data);
+    this->activate_move_ = msg->data;
+  }
 
-//     std::cout<< "Model Name=" << this->model->GetName() << std::endl;
+  // Update function called at every simulation iteration
+  void OnUpdate() {
+    if (this->activate_move_) {
+      if (this->count_ < 10000) {
+        this->model_->SetLinearVel(ignition::math::Vector3d(0, 0, this->vel_));
+      } else {
+        this->activate_move_ = false;
+        this->count_ = 0;
+      }
+      this->count_++;
+    }
+  }
 
+  ~ModelRosPlugin() override {
+    if (this->ros_spinner_thread_.joinable()) {
+      this->ros_spinner_thread_.join();
+    }
+    rclcpp::shutdown();
+  }
 
-//     this->vel = 0.1;         // assign a default value
-//     if (_sdf->HasElement("model_vel")) // check if element existence 
-//     {
-//         this->vel = _sdf->Get<double>("model_vel");  // use _sdf pointer & Get to find value in <model_vel>
-        
-//     }
-//     std::cout << "model_vel= " << this->vel << std::endl;
+private:
+  // Pointer to the model
+  physics::ModelPtr model_;
+  std::string logger_name_;
 
-//     // Listen to the update event. This event is broadcast every
-//     // simulation iteration.
-//     this->updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&ModelRosPlugin::OnUpdate, this));
+  // ROS 2-related members
+  rclcpp::Node::SharedPtr ros_node_;             // ROS 2 Node
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr subscription_; // ROS 2 Subscription
+  std::thread ros_spinner_thread_;              // Separate thread for spinning
 
-//                                                 // bind() is use to bind this & OnUpdate i.e this->OnUpdate
-//   }                          //bind- we don't have define callback fn input parametes its replace by placeholder 
+  // Plugin data members
+  int count_;
+  double vel_;
+  bool activate_move_;
+  std::string command_topic_;
 
+  // Pointer to the update event connection
+  event::ConnectionPtr update_connection_;
+};
 
-//   /// ROS helper function that processes messages  
-//  private: void QueueThread()           // here we have define till what it will spin 
-//     {                                       
-//     static const double timeout = 0.01;
-//         while (this->rosNode->ok())    // while rosnode exist 
-//         {
-//             this->rosQueue.callAvailable(ros::WallDuration(timeout));  //invoke callback 
-//         //                                                              after check avaibility  
-                                                                   
-//         }
-//     }
-
-// public:
-//   void Activate_Callback(const std_msgs::Bool::ConstPtr& msg){
-
-//     ROS_INFO("Received Message = %d", msg->data);
-
-//     this->activate_move = msg->data;
-//   }
-
-//   //keep on updating as simulation iterates 
-// public:
-//   void OnUpdate() {
-
-//     //once rostopic true than it move up for 1000 count
-
-//     if (this->activate_move) {     // if ros topic model_move_up recieves true
-
-//         if (this->count < 10000)  // move up till 10000 counts
-//         {
-//             // Apply a small linear velocity to the model.
-//             this->model->SetLinearVel(ignition::math::Vector3d(0, 0, this->vel));
-            
-//         }
-//         else{
-
-//             //reset values
-//             activate_move = false;
-//             count = 0;
-//         }
-
-//         this->count++;  // increment count
-//     }
-//   }
-
-// // data members
-// private:
-//   physics::ModelPtr model;  // Pointer to the model
-
-// private:
-//   int count;             // to keep a count
-//   double vel;               // assign vel to model
-
-//   private:
-//   event::ConnectionPtr updateConnection;  // Pointer to the update event connection
-
-//   private:
-//   std::unique_ptr<ros::NodeHandle> rosNode;         // ros node handler pointer
-//   ros::CallbackQueue rosQueue;                      // rosqueue
-//   std::thread rosQueueThread;                       // rosqueue thread
-//   ros::Subscriber sub;                             // ros subscriber
-//   bool activate_move;                             // to store boolen ros callback data
-// };
-
-// // Register this plugin with the simulator
-// GZ_REGISTER_MODEL_PLUGIN(ModelRosPlugin)
-// } 
+// Register this plugin with Gazebo
+GZ_REGISTER_MODEL_PLUGIN(ModelRosPlugin)
+}  // namespace gazebo
